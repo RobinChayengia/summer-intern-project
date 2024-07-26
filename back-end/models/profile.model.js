@@ -4,22 +4,35 @@ const profileSchema = mongoose.Schema({
   username: {
     type: String,
     required: true,
+    unique: true,
   },
-  description: {
+  password: {
     type: String,
-    reuired: True,
+    required: true
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  role: {
+    type: String,
+    required: true,
+  },
+  desc: {
+    type: String,
+    reuired: false,
   },
   website: {
     type: String,
-    required: True,
+    required: false,
   },
   location: {
     type: String,
-    required: True,
+    required: false,
   },
-  image: {
+  imageurl: {
     type: String,
-    required: True,
+    required: false,
   },
 });
 const Profile = mongoose.model("Profile", userSchema);
