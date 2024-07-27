@@ -8,6 +8,49 @@ import { useNavigate } from 'react-router-dom';
 
 const options = ["manufacturer", "supplier", "retailer"]
 
+
+
+const resizeAndCompressImage = (file, maxWidth, maxHeight, quality) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                let width = img.width;
+                let height = img.height;
+
+                // Calculate new dimensions
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+                if (height > maxHeight) {
+                    width = (width * maxHeight) / height;
+                    height = maxHeight;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Convert the canvas to a data URL with the desired quality
+                canvas.toBlob(blob => {
+                    if (blob) {
+                        resolve(new File([blob], file.name, { type: file.type }));
+                    } else {
+                        reject(new Error('Failed to convert canvas to Blob'));
+                    }
+                }, file.type, quality);
+            };
+            img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    });
+};
+
 const AddAccount = () => {
     const [user, setUser] = useState('');
     const [pwd, setPwd] = useState('');
@@ -22,6 +65,8 @@ const AddAccount = () => {
         file: [],
         filepreview: null
     });
+    const [uploadUrl, setUploadUrl] = useState('');
+
 
     const errRef = useRef();
     const navigate = useNavigate()
@@ -30,29 +75,38 @@ const AddAccount = () => {
         setErrMsg('');
     }, [user, pwd]);
 
-    const handleImage = async (e) => {
-        setImage({
-            ...image,
-            file: e.target.files[0],
-            filepreview: URL.createObjectURL(e.target.files[0])
-        })
-    }
 
-    // to upload image
-    const uploadImage = async (image) => {
-        const data = new FormData();
-        data.append("image", image.file);
 
-        axios.post("http://localhost:5000/api/uploads/image/", data, {
-            headers: { "Content-Type": "multipart/form-data" }
-        }).then(res => {
-            console.log(res);
+    const handleImageChange = async (e) => {
+        const file = e.target.files[0];
+        try {
+            // Resize and compress the image
+            const resizedFile = await resizeAndCompressImage(file, 800, 800, 0.7); // Adjust dimensions and quality as needed
+            setImage({
+                file: resizedFile,
+                filePreview: URL.createObjectURL(resizedFile)
+            });
+        } catch (error) {
+            console.error('Error processing image:', error);
+        }
+    };
 
-            if (res.data.success === 1) {
-                console.log("image uploaded");
-            }
-        })
-    }
+    const uploadImage = async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'qedxcm3e'); // Replace with your upload preset
+
+        try {
+            const response = await axios.post('https://api.cloudinary.com/v1_1/drcgoyb28/image/upload', formData);
+            return response.data.secure_url; // URL of the uploaded image
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            throw error;
+        }
+    };
+
+
+
 
     const handleBack = () => {
         navigate(-1)
@@ -72,8 +126,20 @@ const AddAccount = () => {
         console.log("description: " + description);
         console.log("website: " + website);
         console.log("location: " + location);
-        const uploadRes = await uploadImage(image);
+        console.log("url: " + uploadUrl);
 
+        if (image.file) {
+            try {
+                const url = await uploadImage(image.file);
+                setUploadUrl(url);
+                console.log('Image URL:', url);
+                // Handle further submission or processing here
+            } catch (error) {
+                console.error('Upload failed:', error);
+            }
+        } else {
+            console.log('No image selected.');
+        }
 
         try {
 
@@ -85,16 +151,13 @@ const AddAccount = () => {
                 'fullname': name,
                 'confirmPassword': pwd2
             });
-            console.log("1111111111111111111111");
-            console.log(uploadRes);
-            console.log("1111111111111111111111");
             const profileData = JSON.stringify({
                 "username": user,
                 "name": name,
                 "desc": description,
                 "website": website,
                 "location": location,
-                "imageurl": image.file.path
+                "imageurl": uploadUrl
             });
 
             const res = await axios.post('http://localhost:5000/api/auth/signup', accountData,
@@ -111,7 +174,7 @@ const AddAccount = () => {
 
             console.log(JSON.stringify(res2.data));
 
-            uploadImage(image);
+
 
             // setUser('');
             // setPwd('');
@@ -253,14 +316,13 @@ const AddAccount = () => {
                         <input
                             type="file"
                             hidden
-                            onChange={handleImage}
+                            onChange={handleImageChange}
                         />
                     </Button>
 
-                    {image.filepreview !== null ?
-                        <img src={image.filepreview} alt="preview" style={{ width: "100%", height: "100%" }} />
-                        : null}
-
+                    {image.filePreview && (
+                        <img src={image.filePreview} alt="preview" style={{ width: "100%", height: "100%" }} />
+                    )}
                     <TextField
                         fullWidth
                         id="outlined-basic"
