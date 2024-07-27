@@ -4,7 +4,7 @@ import User from "../models/user.model.js";
 
 export const signup = async (req, res) => {
   try {
-    const { fullname, username, password, confirmPassword } = req.body;
+    const { fullname, username, password, confirmPassword, role } = req.body;
     if (!username || !password) {
       return res
         .status(400)
@@ -29,6 +29,7 @@ export const signup = async (req, res) => {
       fullname,
       username,
       password: hashedPassword,
+      role
     });
 
     if (newUser) {
@@ -39,6 +40,7 @@ export const signup = async (req, res) => {
         _id: newUser._id,
         username: newUser.username,
         password: newUser.password,
+        role: role
       });
     }
   } catch (error) {
@@ -46,11 +48,19 @@ export const signup = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+
 // export const login = () => {};
-export const logout = () => {};
+export const logout = () => { };
+
+
+
+
+
 export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
+
     const user = await User.findOne({ username });
     const isPasswordCorrect = await bcrypt.compare(
       password,
@@ -67,6 +77,7 @@ export const login = async (req, res) => {
       _id: user._id,
       fullName: user.fullname,
       username: user.username,
+      role: user.role,
     });
   } catch (error) {
     console.log("Error in login controller", error.message);
