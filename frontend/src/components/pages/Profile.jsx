@@ -24,17 +24,25 @@ const Profile = () => {
     }
 
     const handleData = async (e) => {
-        const res = await axios.get(`http://localhost:5000/profile/${auth.user}`)
-            .then(res => {
-                console.log(JSON.stringify(res?.data[0]));
-                setName(res?.data[0].name);
-                setDescription(res?.data[0].description);
-                setRole(res.data[0].role);
-                setWebsite(res?.data[0].website);
-                setLocation(res?.data[0].location);
-                // setImage(res.data.image);
-            })
-    }
+        try {
+            const res = await axios.get('http://localhost:5000/api/user/manu');
+            console.log(JSON.stringify(res.data));
+
+            setName(res.data.name);
+            setDescription(res.data.desc);
+            setRole(res.data.role);
+            setWebsite(res.data.website);
+            setLocation(res.data.location);
+            setImage({
+                file: [],
+                filepreview: res.data.imageurl
+            });
+
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
+
 
     useEffect(() => {
         handleData();

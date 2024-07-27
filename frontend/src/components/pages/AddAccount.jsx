@@ -85,14 +85,16 @@ const AddAccount = () => {
                 'fullname': name,
                 'confirmPassword': pwd2
             });
-
+            console.log("1111111111111111111111");
+            console.log(uploadRes);
+            console.log("1111111111111111111111");
             const profileData = JSON.stringify({
                 "username": user,
                 "name": name,
                 "desc": description,
                 "website": website,
                 "location": location,
-                "imageurl": image.file.name
+                "imageurl": image.file.path
             });
 
             const res = await axios.post('http://localhost:5000/api/auth/signup', accountData,
@@ -123,6 +125,8 @@ const AddAccount = () => {
             //     file: [],
             //     filepreview: null
             // });
+
+
 
         } catch (err) {
             if (!err?.response) {
