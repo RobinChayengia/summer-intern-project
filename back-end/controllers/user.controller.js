@@ -4,23 +4,14 @@ import Profile from "../models/profile.model.js";
 
 export const createAccount = async (req, res) => {
     try {
-        const { username, name, password, role, location, desc, website, loc } = req.body;
-
-
-        // HASH PASSWORD HERE
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
+        const { username, name, location, desc, website } = req.body;
 
         const user = new Profile({
             username,
             name,
-            password: hashedPassword,
-            role,
-            location,
             desc,
             website,
-            loc
+            location
         });
         const saveduser = await user.save();
         res.status(200).json(saveduser);
