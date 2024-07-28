@@ -87,8 +87,6 @@ const UpdateProduct = () => {
     const location = useLocation();
     const qrData = location.state?.qrData;
 
-    console.log("qrData", qrData);
-
     useEffect(() => {
         console.log("useEffect 1")
 
@@ -107,8 +105,8 @@ const UpdateProduct = () => {
     const getImage = async (imageName) => {
         setImage(prevState => ({
             ...prevState,
-            filepreview: `http://localhost:5000/file/product/${imageName}`
-            })
+            filepreview: `${imageName}`
+        })
         )
     }
 
@@ -183,7 +181,7 @@ const UpdateProduct = () => {
 
     }
 
-    
+
 
     const handleBack = () => {
         navigate(-1)
@@ -220,9 +218,9 @@ const UpdateProduct = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();;
 
-        navigate('/update-product-details', { state: { qrData }});
+        navigate('/update-product-details', { state: { qrData } });
     }
-    
+
 
     return (
         <Box sx={{
@@ -341,7 +339,7 @@ const UpdateProduct = () => {
                         {getHistory()}
                         <TimelineItem>
                             <TimelineOppositeContent color="textSecondary">
-                            {dayjs().format('HH:mm a')} {dayjs().format('MM/DD/YYYY')} 
+                                {dayjs().format('HH:mm a')} {dayjs().format('MM/DD/YYYY')}
                             </TimelineOppositeContent>
                             <TimelineSeparator>
                                 <TimelineDot />

@@ -1,14 +1,14 @@
-// routes/uploadRoutes.js
-import express from 'express';
-import { getImage, uploadImage } from '../controllers/uploadController.js';
+// // routes/uploadRoutes.js
+// import express from 'express';
+// import { getImage, uploadImage } from '../controllers/uploadController.js';
 
 
-const router = express.Router();
+// const router = express.Router();
 
-// Route to handle image upload
-router.post('/image', uploadImage);
+// // Route to handle image upload
+// router.post('/image', uploadImage);
 
 
-router.get('/image/:id', getImage);
+// router.get('/image/:id', getImage);
 
-export default router;
+// export default router;
