@@ -148,7 +148,8 @@ const AddAccount = () => {
                 "desc": description,
                 "website": website,
                 "location": location,
-                "imageurl": url
+                "imageurl": url,
+                "role": role
             });
 
             const res = await axios.post('http://localhost:5000/api/auth/signup', accountData,
@@ -167,18 +168,20 @@ const AddAccount = () => {
 
 
 
-            // setUser('');
-            // setPwd('');
-            // setPwd2('');
-            // setRole(options[0]);
-            // setName('');
-            // setDescription('');
-            // setWebsite('');
-            // setLocation('');
-            // setImage({
-            //     file: [],
-            //     filepreview: null
-            // });
+            setUser('');
+            setPwd('');
+            setPwd2('');
+            setRole(options[0]);
+            setName('');
+            setDescription('');
+            setWebsite('');
+            setLocation('');
+            setImage({
+                file: [],
+                filepreview: null
+            });
+
+            navigate('/admin', { replace: true });
 
         } catch (err) {
             if (!err?.response) {

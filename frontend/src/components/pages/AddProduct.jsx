@@ -17,6 +17,49 @@ const getEthereumObject = () => window.ethereum;
  * This function returns the first linked account found.
  * If there is no account linked, it will return null.
  */
+
+const resizeAndCompressImage = (file, maxWidth, maxHeight, quality) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                let width = img.width;
+                let height = img.height;
+
+                // Calculate new dimensions
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+                if (height > maxHeight) {
+                    width = (width * maxHeight) / height;
+                    height = maxHeight;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Convert the canvas to a data URL with the desired quality
+                canvas.toBlob(blob => {
+                    if (blob) {
+                        resolve(new File([blob], file.name, { type: file.type }));
+                    } else {
+                        reject(new Error('Failed to convert canvas to Blob'));
+                    }
+                }, file.type, quality);
+            };
+            img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    });
+};
+
+
 const findMetaMaskAccount = async () => {
     try {
         const ethereum = getEthereumObject();
@@ -48,7 +91,7 @@ const findMetaMaskAccount = async () => {
 };
 
 
-const AddProduct = () => {    
+const AddProduct = () => {
 
     const [currentAccount, setCurrentAccount] = useState("");
     const [serialNumber, setSerialNumber] = useState("");
@@ -68,13 +111,18 @@ const AddProduct = () => {
     const [manuLocation, setManuLocation] = useState("");
     const [isUnique, setIsUnique] = useState(true);
 
-    const CONTRACT_ADDRESS  = '0x62081f016446585cCC507528cc785980296b4Ccd';
+    let imgurl = "";
+
+
+
+    const CONTRACT_ADDRESS = '0x62081f016446585cCC507528cc785980296b4Ccd';
     const contractABI = abi.abi;
 
     const { auth } = useAuth();
     const navigate = useNavigate();
-    
+
     useEffect(() => {
+
         findMetaMaskAccount().then((account) => {
             if (account !== null) {
                 setCurrentAccount(account);
@@ -89,31 +137,31 @@ const AddProduct = () => {
 
         Geocode.fromLatLng(manuLatitude, manuLongtitude).then(
             (response) => {
-              const address = response.results[0].formatted_address;
-              let city, state, country;
-              for (let i = 0; i < response.results[0].address_components.length; i++) {
-                for (let j = 0; j < response.results[0].address_components[i].types.length; j++) {
-                  switch (response.results[0].address_components[i].types[j]) {
-                    case "locality":
-                      city = response.results[0].address_components[i].long_name;
-                      break;
-                    case "administrative_area_level_1":
-                      state = response.results[0].address_components[i].long_name;
-                      break;
-                    case "country":
-                      country = response.results[0].address_components[i].long_name;
-                      break;
-                  }
+                const address = response.results[0].formatted_address;
+                let city, state, country;
+                for (let i = 0; i < response.results[0].address_components.length; i++) {
+                    for (let j = 0; j < response.results[0].address_components[i].types.length; j++) {
+                        switch (response.results[0].address_components[i].types[j]) {
+                            case "locality":
+                                city = response.results[0].address_components[i].long_name;
+                                break;
+                            case "administrative_area_level_1":
+                                state = response.results[0].address_components[i].long_name;
+                                break;
+                            case "country":
+                                country = response.results[0].address_components[i].long_name;
+                                break;
+                        }
+                    }
                 }
-              }              
-              setManuLocation(address.replace(/,/g, ';'));
-              console.log("city, state, country: ", city, state, country);
-              console.log("address:", address);
+                setManuLocation(address.replace(/,/g, ';'));
+                console.log("city, state, country: ", city, state, country);
+                console.log("address:", address);
             },
             (error) => {
-              console.error(error);
+                console.error(error);
             }
-          );
+        );
 
     }, [manuLatitude, manuLongtitude]);
 
@@ -128,58 +176,62 @@ const AddProduct = () => {
     const downloadQR = () => {
         const canvas = document.getElementById("QRCode");
         const pngUrl = canvas
-          .toDataURL("image/png")
-          .replace("image/png", "image/octet-stream");
+            .toDataURL("image/png")
+            .replace("image/png", "image/octet-stream");
         let downloadLink = document.createElement("a");
         downloadLink.href = pngUrl;
         downloadLink.download = `${serialNumber}.png`;
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
-      };
+    };
 
-    
-    const handleBack = () => {
-        navigate(-1)
-    }
 
+    //image handler
     const handleImage = async (e) => {
+        const file = e.target.files[0];
+        const resizedFile = await resizeAndCompressImage(file, 800, 800, 0.7);
         setImage({
             ...image,
-            file: e.target.files[0],
+            file: resizedFile,
             filepreview: URL.createObjectURL(e.target.files[0])
         })
     }
 
-    const getUsername = async (e) => {
-        const res = await axios.get(`http://localhost:5000/profile/${auth.user}`)
-            .then(res => {
-                console.log(JSON.stringify(res?.data[0]));
-                setManuName(res?.data[0].name);
 
+    const uploadImage = async (file) => {
+        console.log('chal rha');
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'qedxcm3e'); // Replace with your upload preset
+
+        try {
+            const response = await axios.post('https://api.cloudinary.com/v1_1/drcgoyb28/image/upload', formData);
+            return response.data.secure_url; // URL of the uploaded image
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            throw error;
+        }
+    };
+
+    const handleBack = () => {
+        navigate(-1)
+    }
+    const getUsername = async (e) => {
+        const res = await axios.get(`http://localhost:5000/api/user/${auth.user}`)
+            .then(res => {
+                setManuName(res.data['name']);
             })
     }
 
 
-    // to upload image
-    const uploadImage = async (image) => {
-        const data = new FormData();
-        data.append("image", image.file);
 
-        axios.post("http://localhost:5000/upload/product", data, {
-            headers: { "Content-Type": "multipart/form-data" }
-        }).then(res => {
-            console.log(res);
-
-            if (res.data.success === 1) {
-                console.log("image uploaded");
-            }
-        })
-    }
 
     const registerProduct = async (e) => {
         e.preventDefault();
-
+        console.log('///////////////////////////////////////////////');
+        console.log(imgurl);
+        console.log('///////////////////////////////////////////////');
         try {
             const { ethereum } = window;
 
@@ -187,11 +239,8 @@ const AddProduct = () => {
                 const provider = new ethers.providers.Web3Provider(ethereum);
                 const signer = provider.getSigner();
                 const productContract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
-
-                console.log("here")
-
                 // write transactions
-                const registerTxn = await productContract.registerProduct(name, brand, serialNumber, description.replace(/,/g, ';'), image.file.name, manuName, manuLocation, manuDate.toString());
+                const registerTxn = await productContract.registerProduct(name, brand, serialNumber, description.replace(/,/g, ';'), imgurl, manuName, manuLocation, manuDate.toString());
                 console.log("Mining (Registering Product) ...", registerTxn.hash);
                 setLoading("Mining (Register Product) ...", registerTxn.hash);
 
@@ -216,29 +265,42 @@ const AddProduct = () => {
 
     const getCurrentTimeLocation = () => {
         setManuDate(dayjs().unix())
-        navigator.geolocation.getCurrentPosition(function(position) {
+        navigator.geolocation.getCurrentPosition(function (position) {
             setManuLatitude(position.coords.latitude);
             setManuLongtitude(position.coords.longitude);
-          });
-    }   
+        });
+    }
 
+    let url = "";
     const addProductDB = async (e) => {
+
+        //image upload
+
+        if (image.file) {
+            try {
+                imgurl = await uploadImage(image.file);
+
+            } catch (error) {
+                console.error('Upload failed:', error);
+                return; // Stop execution if image upload fails
+            }
+        } else {
+            console.log('No image selected.');
+        }
         try {
             const profileData = JSON.stringify({
                 "serialNumber": serialNumber,
                 "name": name,
                 "brand": brand,
-              });
+                "desc": description,
+                "imageurl": url
+            });
 
-            const res = await axios.post('http://localhost:5000/addproduct', profileData,
+            const res = await axios.post('http://localhost:5000/api/product/add', profileData,
                 {
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                 });
-            
             console.log(JSON.stringify(res.data));
-            
-
-
         } catch (err) {
             console.log(err);
         }
@@ -249,13 +311,13 @@ const AddProduct = () => {
 
         const existingSerialNumbers = res.data.map((product) => product.serialnumber);
         existingSerialNumbers.push(serialNumber);
-         
+
         // checking for duplicated serial number
         const duplicates = existingSerialNumbers.filter((item, index) => existingSerialNumbers.indexOf(item) != index)
         console.log("duplicates: ", duplicates)
         const isDuplicate = duplicates.length >= 1;
 
-        setIsUnique(!isDuplicate);   
+        setIsUnique(!isDuplicate);
         console.log(existingSerialNumbers)
         console.log("isUnique: ", isUnique)
     }
@@ -264,22 +326,38 @@ const AddProduct = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-          
+
         console.log("..............................");
         console.log("name: ", name);
         console.log("brand: ", brand);
         console.log("description: ", description);
-        console.log("image: ", image.file.name);
+        console.log("image: ", url);
         console.log("serialNumber: ", serialNumber);
         console.log("manufacture date: ", manuDate);
         console.log("manufactured at: ", manuLocation);
         console.log("manufactured by: ", manuName);
+        console.log("manufactured by: ");
+        console.log(imgurl);
+        console.log("manufactured by: ");
 
         checkUnique();
 
-        if(isUnique){
+        //image upload
+        if (image.file) {
+            try {
+                imgurl = await uploadImage(image.file);
+            } catch (error) {
+                console.error('Upload failed:', error);
+                return; // Stop execution if image upload fails
+            }
+        } else {
+            console.log('No image selected.');
+        }
+
+        if (isUnique) {
             uploadImage(image);
-            addProductDB(e); // add product to database
+            console.log(imgurl);
+            // addProductDB(e); // add product to database
             setLoading("Please pay the transaction fee to update the product details...")
             await registerProduct(e);
         }
@@ -324,7 +402,7 @@ const AddProduct = () => {
                         onChange={(e) => setSerialNumber(e.target.value)}
                         value={serialNumber}
                     />
-                    
+
                     <TextField
                         fullWidth
                         id="outlined-basic"
@@ -358,7 +436,7 @@ const AddProduct = () => {
                         minRows={2}
                         onChange={(e) => setDescription(e.target.value)}
                         value={description}
-                    />                        
+                    />
 
 
                     <Button
@@ -380,23 +458,23 @@ const AddProduct = () => {
                         : null}
 
                     {qrData !== "" ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '3%' }}>
-                        <QRCode 
+                        <QRCode
                             value={qrData}
                             id="QRCode" />
-                
+
                     </div> : null}
 
-                    {qrData !== "" ? <div style={{ display: 'flex',  justifyContent: 'center', alignItems: 'center', marginTop: '3%' }}>
+                    {qrData !== "" ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '3%' }}>
                         <Button
                             variant="outlined"
                             component="label"
                             fullWidth
-                            sx={{ marginTop: "3%", marginBottom: "3%" }}                            
+                            sx={{ marginTop: "3%", marginBottom: "3%" }}
                             onClick={downloadQR}
                         >
                             Download
                         </Button>
-      
+
                     </div> : null}
 
                     {loading === "" ? null
@@ -437,7 +515,7 @@ const AddProduct = () => {
                             Back
                         </Button>
 
-                    </Box>                    
+                    </Box>
 
                 </form>
 
