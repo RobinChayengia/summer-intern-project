@@ -126,7 +126,6 @@ const AddAccount = () => {
         console.log("description: " + description);
         console.log("website: " + website);
         console.log("location: " + location);
-        console.log("url: " + uploadUrl);
 
         if (image.file) {
             try {
@@ -141,9 +140,8 @@ const AddAccount = () => {
             console.log('No image selected.');
         }
 
+    
         try {
-
-
             const accountData = JSON.stringify({
                 "username": user,
                 "password": pwd,
@@ -151,6 +149,7 @@ const AddAccount = () => {
                 'fullname': name,
                 'confirmPassword': pwd2
             });
+
             const profileData = JSON.stringify({
                 "username": user,
                 "name": name,
@@ -188,8 +187,6 @@ const AddAccount = () => {
             //     file: [],
             //     filepreview: null
             // });
-
-
 
         } catch (err) {
             if (!err?.response) {
