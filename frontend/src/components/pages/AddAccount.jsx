@@ -87,6 +87,7 @@ const AddAccount = () => {
                 filePreview: URL.createObjectURL(resizedFile)
             });
         } catch (error) {
+            console.error('Error handling image change:', error);
             console.error('Error processing image:', error);
         }
     };
@@ -115,32 +116,23 @@ const AddAccount = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // for debugging only
-        console.log("-----------------------------------")
-        console.log("user: " + user);
-        console.log("pwd: " + pwd);
-        console.log("pwd2: " + pwd2);
-        console.log("role: " + role);
-        console.log("image: " + image.file.name);
-        console.log("name: " + name);
-        console.log("description: " + description);
-        console.log("website: " + website);
-        console.log("location: " + location);
+
+        //image upload
+        let url = "";
 
         if (image.file) {
             try {
-                const url = await uploadImage(image.file);
+                url = await uploadImage(image.file);
                 setUploadUrl(url);
-                console.log('Image URL:', url);
-                // Handle further submission or processing here
             } catch (error) {
                 console.error('Upload failed:', error);
+                return; // Stop execution if image upload fails
             }
         } else {
             console.log('No image selected.');
         }
 
-    
+        //create account and profile
         try {
             const accountData = JSON.stringify({
                 "username": user,
@@ -156,7 +148,7 @@ const AddAccount = () => {
                 "desc": description,
                 "website": website,
                 "location": location,
-                "imageurl": uploadUrl
+                "imageurl": url
             });
 
             const res = await axios.post('http://localhost:5000/api/auth/signup', accountData,
@@ -164,7 +156,7 @@ const AddAccount = () => {
                     headers: { 'Content-Type': 'application/json' },
                 });
 
-            console.log(JSON.stringify(res.data));
+            // console.log(JSON.stringify(res.data));
 
             const res2 = await axios.post('http://localhost:5000/api/user/createAccount', profileData,
                 {
