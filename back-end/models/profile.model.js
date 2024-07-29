@@ -1,20 +1,12 @@
 import mongoose from "mongoose";
 
-const profileSchema = mongoose.Schema({
+const profileSchema = new mongoose.Schema({
   username: {
     type: String,
     required: true,
     unique: true,
   },
-  password: {
-    type: String,
-    required: true
-  },
   name: {
-    type: String,
-    required: true,
-  },
-  role: {
     type: String,
     required: true,
   },
@@ -33,7 +25,7 @@ const profileSchema = mongoose.Schema({
   imageurl: {
     type: String,
     required: false,
-  },
+  }
 });
-const Profile = mongoose.model("Profile", userSchema);
+const Profile = mongoose.model("Profile", profileSchema);
 export default Profile;
