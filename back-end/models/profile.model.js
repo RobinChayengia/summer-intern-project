@@ -25,6 +25,10 @@ const profileSchema = new mongoose.Schema({
   imageurl: {
     type: String,
     required: false,
+  },
+  role: {
+    type: String,
+    required: false,
   }
 });
 const Profile = mongoose.model("Profile", profileSchema);

@@ -4,7 +4,7 @@ import Profile from "../models/profile.model.js";
 
 export const createAccount = async (req, res) => {
     try {
-        const { username, name, location, desc, website, imageurl } = req.body;
+        const { username, name, location, desc, website, imageurl,role } = req.body;
 
         const user = new Profile({
             username,
@@ -12,7 +12,8 @@ export const createAccount = async (req, res) => {
             desc,
             website,
             location,
-            imageurl
+            imageurl,
+            role
         });
         const saveduser = await user.save();
         res.status(200).json(saveduser);
